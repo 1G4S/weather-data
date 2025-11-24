@@ -5,3 +5,4 @@ transform.py
 visualization.py
 .venv
 .idea
+gold_data
