@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 from extract import (save_raw_data_to_csv, save_data_to_json_file, get_raw_data,
-                     normalize_csv_to_dataframe, rename_columns)
+                     normalize_csv_to_dataframe, rename_columns, merge_json_files)
 
 load_dotenv()
 
@@ -25,6 +25,9 @@ columns = {"created_at": "timestamp",
            "field5": "PM2.5_norm",
            "field6": "PM10_norm",
            "field7": "city"}
+
+files = ["./data/paris-weather.json", "./data/rome-weather.json", "./data/madrid-weather.json",
+         "./data/warsaw-weather.json"]
 
 ###################### PARIS ##########################
 raw_data = get_raw_data(channel_id=CHANNEL_ID_PARIS, api_key=API_KEY_PARIS)
@@ -53,3 +56,6 @@ save_raw_data_to_csv(raw_data=raw_data, filename="warsaw.csv")
 warsaw_df = normalize_csv_to_dataframe('./raw_data/warsaw.csv')
 warsaw_ready_df = rename_columns(warsaw_df, columns=columns)
 save_data_to_json_file(warsaw_ready_df, filename="warsaw-weather.json")
+
+###################### FINAL DATA ######################
+merge_json_files(files, "weather-data.json")
