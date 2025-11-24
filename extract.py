@@ -1,6 +1,47 @@
+import json
+
 import pandas as pd
 import os
 import requests
+
+
+def get_raw_data(channel_id: str, api_key: str) -> str:
+    """
+    Get raw data from thingspeak cloud.
+
+    :param channel_id: ID of channel to connect
+    :param api_key: Key to connect to this channel
+    :return: raw_data from channel
+    """
+    if not isinstance(channel_id, str) or not isinstance(api_key, str):
+        raise TypeError(
+            f'Incorrect argument types.'
+        )
+
+    if api_key.strip() == "":
+        raise ValueError(
+            f'Incorrect value of api_key: {api_key}'
+        )
+
+    url = f"https://api.thingspeak.com/channels/{channel_id}/feeds.csv"
+
+    params = {
+        'api_key': api_key
+    }
+    try:
+        raw_data = requests.get(url, params=params, timeout=(5, 10))
+
+    except TimeoutError as e:
+        raise TimeoutError(
+            f'TimeoutError'
+        ) from e
+
+    except Exception as e:
+        raise Exception(
+            f'{e}'
+        )
+
+    return raw_data.text
 
 
 def save_raw_data_to_csv(raw_data: str, filename: str) -> None:
@@ -51,43 +92,26 @@ def save_raw_data_to_csv(raw_data: str, filename: str) -> None:
         ) from e
 
 
-def get_raw_data(channel_id: str, api_key: str) -> str:
+def normalize_csv_to_dataframe(file_path: str) -> pd.DataFrame:
     """
-    Get raw data from thingspeak cloud.
+    Convert csv to dataframe and rename columns.
 
-    :param channel_id: ID of channel to connect
-    :param api_key: Key to connect to this channel
-    :return: raw_data from channel
+    :param file_path: path to file that should be converted to pd.DataFrame
+    :return: prepared pd.DataFrame to be saved to json file
     """
-    if not isinstance(channel_id, str) or not isinstance(api_key, str):
+    if not isinstance(file_path, str):
         raise TypeError(
-            f'Incorrect argument types.'
+            f'Incorrect type of argument: {type(file_path)}'
         )
 
-    if api_key.strip() == "":
+    if file_path.strip() == "":
         raise ValueError(
-            f'Incorrect value of api_key: {api_key}'
+            f'Incorrect value of file path: {file_path}'
         )
 
-    url = f"https://api.thingspeak.com/channels/{channel_id}/feeds.csv"
+    data = pd.read_csv(file_path)
 
-    params = {
-        'api_key': api_key
-    }
-    try:
-        raw_data = requests.get(url, params=params, timeout=(5, 10))
-
-    except TimeoutError as e:
-        raise TimeoutError(
-            f'TimeoutError'
-        ) from e
-
-    except Exception as e:
-        raise Exception(
-            f'{e}'
-        )
-
-    return raw_data.text
+    return data
 
 
 def rename_columns(data: pd.DataFrame, columns: dict) -> pd.DataFrame:
@@ -110,29 +134,6 @@ def rename_columns(data: pd.DataFrame, columns: dict) -> pd.DataFrame:
         ) from e
 
     return prepared_data
-
-
-def normalize_csv_to_dataframe(file_path: str) -> pd.DataFrame:
-
-    """
-    Convert csv to dataframe and rename columns.
-
-    :param file_path: path to file that should be converted to pd.DataFrame
-    :return: prepared pd.DataFrame to be saved to json file
-    """
-    if not isinstance(file_path, str):
-        raise TypeError(
-            f'Incorrect type of argument: {type(file_path)}'
-        )
-
-    if file_path.strip() == "":
-        raise ValueError(
-            f'Incorrect value of file path: {file_path}'
-        )
-
-    data = pd.read_csv(file_path)
-
-    return data
 
 
 def save_data_to_json_file(data: pd.DataFrame, filename: str) -> None:
@@ -181,4 +182,58 @@ def save_data_to_json_file(data: pd.DataFrame, filename: str) -> None:
     except PermissionError as e:
         raise PermissionError(
             f'No credentials for this catalog: {file_path}'
+        ) from e
+
+
+def merge_json_files(paths_files: list, filename: str) -> None:
+    """
+    Merge json files into one json, and save it to gold_data directory.
+
+    :param paths_files: list of paths to json files.
+    :param filename: name of file that data will be saved.
+    :return: None
+    """
+    if not isinstance(paths_files, list) and not isinstance(filename, str):
+        raise TypeError(
+            f'Incorrect types of arguments'
+        )
+
+    if filename.strip() == '' or filename[-5:] != '.json':
+        raise ValueError(
+            f'Incorrect value of arguments. Filename: "{filename}"')
+
+    try:
+        if not os.path.exists('./gold_data'):
+            os.makedirs('./gold_data')
+
+    except PermissionError as e:
+        raise PermissionError(
+            f'No credentials for creating this directory.'
+        ) from e
+
+    except OSError as e:
+        raise OSError(
+            f'Cannot create a directory.'
+        ) from e
+
+    merged_json = []
+
+    try:
+        for file in paths_files:
+            with open(file, 'r') as f:
+                data = json.load(f)
+                merged_json.extend(data)
+    except Exception as e:
+        raise Exception(
+            f'Exception happened: {e}'
+        ) from e
+
+    output_path = './gold_data/' + filename
+
+    try:
+        with open(output_path, 'w') as f:
+            json.dump(merged_json, f, indent=4)
+    except Exception as e:
+        raise Exception(
+            f'Exception happened: {e}'
         ) from e
