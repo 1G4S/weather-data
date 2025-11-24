@@ -51,7 +51,7 @@ def save_raw_data_to_csv(raw_data: str, filename: str) -> None:
         ) from e
 
 
-def get_raw_data(channel_id: int, api_key: str) -> str:
+def get_raw_data(channel_id: str, api_key: str) -> str:
     """
     Get raw data from thingspeak cloud.
 
@@ -59,7 +59,7 @@ def get_raw_data(channel_id: int, api_key: str) -> str:
     :param api_key: Key to connect to this channel
     :return: raw_data from channel
     """
-    if not isinstance(channel_id, int) or not isinstance(api_key, str):
+    if not isinstance(channel_id, str) or not isinstance(api_key, str):
         raise TypeError(
             f'Incorrect argument types.'
         )
@@ -90,7 +90,29 @@ def get_raw_data(channel_id: int, api_key: str) -> str:
     return raw_data.text
 
 
-def normalize_csv_to_dataframe_and_rename_columns(file_path: str) -> pd.DataFrame:
+def rename_columns(data: pd.DataFrame, columns: dict) -> pd.DataFrame:
+    """
+    Change name of headers.
+
+    :param data: dataframe with raw_data and raw headers
+    :param columns: dict, old headers with as keys and new headers as values
+    :return: dataframe with new headers
+    """
+    if not isinstance(columns, dict):
+        raise TypeError(
+            f'Incorrect type of argument: {type(columns)}'
+        )
+    try:
+        prepared_data = data.rename(columns=columns)
+    except Exception as e:
+        raise Exception(
+            f'Exception happened: {e}'
+        ) from e
+
+    return prepared_data
+
+
+def normalize_csv_to_dataframe(file_path: str) -> pd.DataFrame:
 
     """
     Convert csv to dataframe and rename columns.
@@ -110,16 +132,7 @@ def normalize_csv_to_dataframe_and_rename_columns(file_path: str) -> pd.DataFram
 
     data = pd.read_csv(file_path)
 
-    ready_data = data.rename(columns={"created_at": "timestamp",
-                                      "field1": "PM2.5",
-                                      "field2": "PM10",
-                                      "field3": "temperature",
-                                      "field4": "humidity",
-                                      "field5": "PM2.5 norm",
-                                      "field6": "PM10 norm",
-                                      "field7": "city"})
-
-    return ready_data
+    return data
 
 
 def save_data_to_json_file(data: pd.DataFrame, filename: str) -> None:
