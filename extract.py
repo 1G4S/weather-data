@@ -1,8 +1,49 @@
 import pandas as pd
 import os
+import requests
+
+
+def get_raw_data(channel_id: int, api_key: str) -> str:
+    """
+    Get raw data from thingspeak cloud.
+
+    :param channel_id: ID of channel to connect
+    :param api_key: Key to connect to this channel
+    :return: raw_data from channel
+    """
+    if not isinstance(channel_id, int) or not isinstance(api_key, str):
+        raise TypeError(
+            f'Incorrect argument types.'
+        )
+
+    if api_key.strip() == "":
+        raise ValueError(
+            f'Incorrect value of api_key: {api_key}'
+        )
+
+    url = f"https://api.thingspeak.com/channels/{channel_id}/feeds.csv"
+
+    params = {
+        'api_key': api_key
+    }
+    try:
+        raw_data = requests.get(url, params=params, timeout=(5, 10))
+
+    except TimeoutError as e:
+        raise TimeoutError(
+            f'TimeoutError'
+        ) from e
+
+    except Exception as e:
+        raise Exception(
+            f'{e}'
+        )
+
+    return raw_data.text
 
 
 def normalize_csv_to_dataframe_and_rename_columns(file_path: str) -> pd.DataFrame:
+
     """
     Convert csv to dataframe and rename columns.
 
