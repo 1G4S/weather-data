@@ -1,0 +1,8 @@
+.env
+raw_data
+data
+extract.py
+transform.py
+visualization.py
+.venv
+.idea
