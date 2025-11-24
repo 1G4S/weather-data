@@ -3,6 +3,12 @@ import os
 
 
 def normalize_csv_to_dataframe_and_rename_columns(file_path: str) -> pd.DataFrame:
+    """
+    Convert csv to dataframe and rename columns.
+
+    :param file_path: path to file that should be converted to pd.DataFrame
+    :return: prepared pd.DataFrame to be saved to json file
+    """
     if not isinstance(file_path, str):
         raise TypeError(
             f'Incorrect type of argument: {type(file_path)}'
