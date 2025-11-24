@@ -3,6 +3,54 @@ import os
 import requests
 
 
+def save_raw_data_to_csv(raw_data: str, filename: str) -> None:
+    """
+    Function that saves raw data to csv file in raw_data directory.
+
+    :param raw_data: raw_data as a string
+    :param filename: Name of the file with .csv ending, that will be created if not exists, or will be overwritten
+                    if exists.
+    :return: None
+    """
+    if not isinstance(raw_data, str) or not isinstance(filename, str):
+        raise TypeError(
+            f'Incorrect type of arguments. Current type: Data: "{type(raw_data)}", Filename: "{type(filename)}"')
+
+    if filename.strip() == '' or filename[-4:] != '.csv':
+        raise ValueError(
+            f'Incorrect value of arguments. Filename: "{filename}"')
+
+    try:
+        if not os.path.exists('./raw_data'):
+            os.makedirs('./raw_data')
+
+    except PermissionError as e:
+        raise PermissionError(
+            f'No credentials for creating this directory.'
+        ) from e
+
+    except OSError as e:
+        raise OSError(
+            f'Cannot create a directory.'
+        ) from e
+
+    file_path = './raw_data/' + filename
+
+    try:
+        with open(file_path, 'w') as file:
+            file.write(raw_data)
+
+    except FileNotFoundError as e:
+        raise FileNotFoundError(
+            f'Path to file is wrong: {file_path}'
+        ) from e
+
+    except PermissionError as e:
+        raise PermissionError(
+            f'No credentials for this catalog: {file_path}'
+        ) from e
+
+
 def get_raw_data(channel_id: int, api_key: str) -> str:
     """
     Get raw data from thingspeak cloud.
@@ -76,7 +124,7 @@ def normalize_csv_to_dataframe_and_rename_columns(file_path: str) -> pd.DataFram
 
 def save_data_to_json_file(data: pd.DataFrame, filename: str) -> None:
     """
-    Function that saves given data to json file in raw_data directory.
+    Function that saves given data to json file in data directory.
 
     :param data: pd.Dataframe, data to be saved to file
     :param filename: Name of the file with .json ending, that will be created if not exists, or will be overwritten
