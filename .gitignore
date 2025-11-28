@@ -1,7 +1,4 @@
 .env
-raw_data
-data
 transform.py
 .venv
 .idea
-gold_data
