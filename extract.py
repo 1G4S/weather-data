@@ -26,8 +26,10 @@ def get_raw_data(channel_id: str, api_key: str) -> str:
     url = f"https://api.thingspeak.com/channels/{channel_id}/feeds.csv"
 
     params = {
-        'api_key': api_key
+        'api_key': api_key,
+        'results': 8000
     }
+
     try:
         raw_data = requests.get(url, params=params, timeout=(5, 10))
 
